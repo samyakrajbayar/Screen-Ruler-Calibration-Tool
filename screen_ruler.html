@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Ruler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        
+        .calibration {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .calibration h2 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .calibration p {
+            color: #6c757d;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        input[type="number"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        select {
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .calibration-bar {
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            margin: 20px 0;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .calibration-bar::after {
+            content: 'Adjust this to match your reference object';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .ruler-container {
+            margin-top: 30px;
+            overflow-x: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        
+        .ruler {
+            position: relative;
+            height: 80px;
+            background: white;
+            border: 2px solid #333;
+            margin-bottom: 30px;
+        }
+        
+        .tick {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            background: #333;
+        }
+        
+        .tick.major {
+            height: 40px;
+            width: 3px;
+        }
+        
+        .tick.medium {
+            height: 25px;
+        }
+        
+        .tick.minor {
+            height: 15px;
+        }
+        
+        .label {
+            position: absolute;
+            top: 5px;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .info {
+            background: #e7f3ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info strong {
+            color: #667eea;
+        }
+        
+        .unit-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .unit-tab {
+            padding: 10px 20px;
+            background: #e9ecef;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .unit-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .unit-tab:hover:not(.active) {
+            background: #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📏 Screen Ruler Calibration Tool</h1>
+        
+        <div class="calibration">
+            <h2>Step 1: Calibrate Your Screen</h2>
+            <p>Hold a credit card, ruler, or any object with a known size against the bar below. Adjust the size until it matches your reference object.</p>
+            
+            <div class="input-group">
+                <input type="number" id="refSize" value="85.6" step="0.1" min="0.1" placeholder="Reference size">
+                <select id="refUnit">
+                    <option value="mm">millimeters (mm)</option>
+                    <option value="cm">centimeters (cm)</option>
+                    <option value="inch">inches</option>
+                </select>
+                <button onclick="calibrate()">Calibrate</button>
+            </div>
+            
+            <div class="calibration-bar" id="calibrationBar"></div>
+            
+            <div class="info">
+                <strong>💡 Tip:</strong> A standard credit card is 85.6mm (8.56cm or 3.37 inches) wide.
+            </div>
+        </div>
+        
+        <div class="ruler-container" id="rulerContainer" style="display: none;">
+            <h2 style="margin-bottom: 20px; color: #495057;">Your Calibrated Rulers</h2>
+            
+            <div class="unit-tabs">
+                <div class="unit-tab active" onclick="showRuler('cm')">Centimeters</div>
+                <div class="unit-tab" onclick="showRuler('mm')">Millimeters</div>
+                <div class="unit-tab" onclick="showRuler('inch')">Inches</div>
+                <div class="unit-tab" onclick="showRuler('m')">Meters</div>
+                <div class="unit-tab" onclick="showRuler('foot')">Feet</div>
+            </div>
+            
+            <div id="rulers"></div>
+            
+            <div class="info">
+                <strong>Screen Info:</strong><br>
+                Resolution: <span id="resolution"></span><br>
+                Pixels per cm: <span id="ppcm"></span><br>
+                DPI (approximate): <span id="dpi"></span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let pixelsPerMM = null;
+        let currentUnit = 'cm';
+        
+        function calibrate() {
+            const refSize = parseFloat(document.getElementById('refSize').value);
+            const refUnit = document.getElementById('refUnit').value;
+            const bar = document.getElementById('calibrationBar');
+            
+            if (isNaN(refSize) || refSize <= 0) {
+                alert('Please enter a valid reference size');
+                return;
+            }
+            
+            // Convert reference size to mm
+            let refSizeMM = refSize;
+            if (refUnit === 'cm') refSizeMM = refSize * 10;
+            if (refUnit === 'inch') refSizeMM = refSize * 25.4;
+            
+            // Calculate pixels per mm
+            const barWidth = bar.offsetWidth;
+            pixelsPerMM = barWidth / refSizeMM;
+            
+            // Show rulers
+            document.getElementById('rulerContainer').style.display = 'block';
+            updateRulers();
+            updateScreenInfo();
+        }
+        
+        function updateScreenInfo() {
+            const width = window.screen.width;
+            const height = window.screen.height;
+            document.getElementById('resolution').textContent = `${width} × ${height}px`;
+            document.getElementById('ppcm').textContent = (pixelsPerMM * 10).toFixed(2);
+            document.getElementById('dpi').textContent = (pixelsPerMM * 25.4).toFixed(2);
+        }
+        
+        function showRuler(unit) {
+            currentUnit = unit;
+            
+            // Update active tab
+            document.querySelectorAll('.unit-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            updateRulers();
+        }
+        
+        function updateRulers() {
+            const container = document.getElementById('rulers');
+            container.innerHTML = '';
+            
+            const units = {
+                'mm': { multiplier: 1, major: 10, medium: 5, minor: 1, label: 'mm', maxLength: 300 },
+                'cm': { multiplier: 10, major: 10, medium: 5, minor: 1, label: 'cm', maxLength: 30 },
+                'm': { multiplier: 1000, major: 10, medium: 5, minor: 1, label: 'm', maxLength: 3 },
+                'inch': { multiplier: 25.4, major: 1, medium: 0.5, minor: 0.125, label: 'in', maxLength: 12 },
+                'foot': { multiplier: 304.8, major: 1, medium: 0.5, minor: 0.25, label: 'ft', maxLength: 1 }
+            };
+            
+            const unit = units[currentUnit];
+            const rulerWidth = Math.min(container.offsetWidth - 40, unit.maxLength * unit.multiplier * pixelsPerMM);
+            
+            const ruler = document.createElement('div');
+            ruler.className = 'ruler';
+            ruler.style.width = rulerWidth + 'px';
+            
+            const totalUnits = rulerWidth / (unit.multiplier * pixelsPerMM);
+            
+            // Draw ticks
+            for (let i = 0; i <= totalUnits / unit.minor; i++) {
+                const value = i * unit.minor;
+                const pos = value * unit.multiplier * pixelsPerMM;
+                
+                if (pos > rulerWidth) break;
+                
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                tick.style.left = pos + 'px';
+                
+                if (value % unit.major === 0) {
+                    tick.classList.add('major');
+                    const label = document.createElement('div');
+                    label.className = 'label';
+                    label.textContent = value + unit.label;
+                    label.style.left = pos + 'px';
+                    ruler.appendChild(label);
+                } else if (value % unit.medium === 0) {
+                    tick.classList.add('medium');
+                } else {
+                    tick.classList.add('minor');
+                }
+                
+                ruler.appendChild(tick);
+            }
+            
+            container.appendChild(ruler);
+        }
+        
+        // Update calibration bar size
+        window.addEventListener('resize', () => {
+            if (pixelsPerMM) {
+                updateRulers();
+            }
+        });
+    </script>
+</body>
+</html>
